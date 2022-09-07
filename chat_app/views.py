@@ -19,26 +19,26 @@ def chat(request):
     learning_languages = request.POST["learning-languages"]
     username = request.POST["username"]
     request.session["username"] = username
-    try:
-        match = TempUser.objects.filter(knows=learning_languages, learning=know_languages).first()
+    if TempUser.objects.filter(knows=learning_languages, learning=know_languages).exists():
         print("found match")
+        match = TempUser.objects.filter(knows=learning_languages, learning=know_languages).first()
         room_name = match.room_name.id
         room = match.room_name
         online_user = OnlineUser.objects.create(username=username, room_name=room)
         room.user2 = online_user.username
         room.save()
-        request.session['online_user_id'] = online_user.id
+        request.session["online_user_id"] = online_user.id
         request.session.modified = True
         match.delete()
-    except (ObjectDoesNotExist, AttributeError) as e:
-        print("caught exception")
+    else:
+        print("no match")
         new_room = ChatRoom.objects.create()
         online_user = OnlineUser.objects.create(username=username, room_name=new_room)
         temp_user = TempUser.objects.create(username=username, knows=know_languages, learning=learning_languages, room_name=new_room)
         new_room.user1 = online_user.username
         new_room.save()
         request.session["temp_user_id"] = temp_user.id
-        request.session['online_user_id'] = online_user.id
+        request.session["online_user_id"] = online_user.id
         request.session.modifed = True
         room_name = new_room.id
     return render(request, "chat_app/chat.html", {
