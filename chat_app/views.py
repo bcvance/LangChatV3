@@ -5,6 +5,8 @@ from django.db.models.base import ObjectDoesNotExist
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.core import serializers
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
 
 
 # Create your views here.
@@ -14,10 +16,11 @@ def index(request):
         "num_online": num_online,
     })
 
+@csrf_exempt
 def chat(request):
-    know_languages = request.POST["know-languages"]
-    learning_languages = request.POST["learning-languages"]
-    username = request.POST["username"]
+    know_languages = request.POST.get("know-languages")
+    learning_languages = request.POST.get("learning-languages")
+    username = request.POST.get("username")
     request.session["username"] = username
     if TempUser.objects.filter(knows=learning_languages, learning=know_languages).exists():
         print("found match")
@@ -41,12 +44,18 @@ def chat(request):
         request.session["online_user_id"] = online_user.id
         request.session.modifed = True
         room_name = new_room.id
-    return render(request, "chat_app/chat.html", {
+        return JsonResponse({
         "know_lang": know_languages,
         "learning_lang": learning_languages,
         "room_name": room_name,
         "username": username,
     })
+    # return render(request, "chat_app/chat.html", {
+    #     "know_lang": know_languages,
+    #     "learning_lang": learning_languages,
+    #     "room_name": room_name,
+    #     "username": username,
+    # })
 
 # @api_view(['GET'])
 # def get_users(request, room_name):
